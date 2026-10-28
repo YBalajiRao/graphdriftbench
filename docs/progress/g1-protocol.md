@@ -1,0 +1,71 @@
+# Gate G1 — locked protocol (written and committed BEFORE any official stream was run)
+
+The commit that contains this file is the lock. After it, nothing below (constants, seeds, thresholds, window sizes, pass rules, presets) may change for the official run; a change would be a new protocol version and the official rows would have to be regenerated and the change disclosed.
+
+## 0. Relation to the Blueprint (v1.0, §5.1, §6.1, §13)
+| Item | Blueprint text | What this protocol does | Status |
+|---|---|---|---|
+| Pass criteria | §13: audit matrix diagonal-dominant; argmax-of-standardised-z macro-F1 ≥ 0.80 at ε = 0.2; δ residual fires on pure α/β/γ in ≤ 15% of seeds | identical, implemented literally (§6) | follows |
+| Standardisation | §5.1: μ, σ from a moving-block bootstrap of the reference windows | moving-block bootstrap of the reference windows' statistic series, r = 10, block length 2, 500 replicates (§3). **r, block length and replicate count are not given in the Blueprint**; these are the values you approved. The Blueprint does not say how a window's statistic is defined *inside* the reference; I use leave-one-out against the other windows (§3). | follows the text; numbers and the leave-one-out construction are my fills for unspecified details |
+| Reference | "last r windows since the last alarm" | the r windows before the evaluated window; no alarm machinery exists in G1 (no CUSUM), so no reset | consistent |
+| β statistic | $W_1(\hat\rho_k,\bar\rho_R)$ on the persistent-node induced subgraph, KPM | as specified: 100 Chebyshev moments, 200 Rademacher probes (Step 1 purity setting), $\bar\rho_R$ = mean of the pool windows' DoS | follows (200 probes: the library default is 30 in Blueprint-silent territory; justified in `step-1.md` §6.5) |
+| α statistic | degree-stratified linear MMD on persistent-node events | as specified | follows |
+| γ statistic | max of standardised $1-J$ and new-node rate | as specified, plus a **resolution floor** on σ for these two components only (§3.4) | **addition not in the Blueprint** |
+| δ statistic | $s_\delta=\ell_k-\hat\ell_k$, $\hat\ell_k=\mathbf w^\top[z_\alpha,z_\beta,z_\gamma,1]$, $\mathbf w$ by robust (Huber) fit on reference windows | as specified; standardisation of the residual from leave-one-out residuals (§3.5) | follows; LOO standardisation is my fill |
+| δ injection | §6.1: $B\to\Pi B\Pi^\top$ among equal-size, equal-density blocks, and/or flip $\beta_h$ | full eligible block permutation, no ε | follows. **The Blueprint's ε-grid and "at ε = 0.2" have no meaning for a permutation**; ε = 0.2 applies to α, β, γ only. ε does **not** denote an equal perturbation size across types (measured, `eps_effective.csv`). |
+| β injection | §6.1: $B\to(1-\varepsilon)B+\varepsilon B'$ (merge/split, densification) | $B'$ = `hub` (degree concentration, boost 10) as the primary test case | `hub` is not one of the Blueprint's two examples; it is the Step-1-chosen target (exploratory selection on disjoint seeds) and is a degree-concentration change, i.e. an instance of "degree concentration" named in Definition 2 |
+| Detection P/R/F1, delay, false alarms | §7.2 (detector evaluation) | defined here as **supplementary** G1 outputs (§6.3); G1 itself does not require them | supplementary |
+
+No conflict that forbids running was found. Everything marked "my fill" or "addition" is disclosed in the final report.
+
+## 1. Configurations (never pooled into one F1)
+| id | preset file | graph | w | role |
+|---|---|---|---|---|
+| P1 | `small_bipartite.yaml` | 300 src / 150 dst, 4+4 blocks, d_edge 32, uniform popularity, p_out 0.15, node σ 0.5, β_h 0.5 | 2000 events | primary reference |
+| P2 | `wiki_like.yaml` | 8,227 / 1,000, 8+8 blocks, Pareto popularity, d_edge 172 | 5000 | required realism / stress |
+| P3 | `g2_learnable.yaml` | same shape as P1 (300/150, 4+4, d_edge 32); only p_out 0.02, node σ 0.3, β_h 2.0, base rate 150 differ | 2000 | additional learnable variant (**not required**, answers the "common configuration" question without altering P1/P2) |
+
+Each configuration is scored on its own, with all four drift types generated from that same configuration, so each macro-F1 compares like with like. A single pooled macro-F1 over P1–P3 is not computed. **Overall G1 verdict:** PASS only if P1 **and** P2 both pass all three criteria with no failed stream; if only P1 passes, the verdict is "not passed on the required stress configuration"; P3 is reported and cannot rescue a failing P1/P2. Consequence for the learnable-preset question: P1 and P2 stay as specified; whether a learnable wiki-shaped variant should replace P2 is **left for your approval** (dev evidence: on P2 the TGN reaches only reference loss 1.03 and does not respond to δ, §8).
+
+## 2. Streams, seeds, geometry
+- Per configuration: 20 seeds × {α, β, γ, δ} with seeds 2000–2019 (the same seed gives the same underlying graph structure for the four types: paired design); 20 stationary controls with seeds 2100–2119; non-gating secondary: δ[mix, ε = 0.2] with seeds 2000–2019 (P1 and P3 only).
+- Injections at ε = 0.2: α (shift = ε·σ_e·√d_e), β `hub` boost 10, γ side `src` (default side); δ `permute` with `flip_homophily` off. Abrupt onset.
+- Layout `reserved` ids; learner access only through `StreamReader`; node features via the reader, entity features installed after the batch of the first event.
+- Stream length: $(30 + 10)\times 1.03\,w$ events before the onset (30 warm-up windows + 10 reference windows) and $3.4\,w$ expected events after it. Windows are consecutive blocks of $w$ events counted backwards/forwards from the onset event index: reference windows $R_0..R_9$ immediately before, test windows $T_0,T_1,T_2$ immediately after. The onset time is used by the harness only to cut windows and is never an input of the learner or of the statistics (the statistics see windows of arrays; the TGN sees batches of 200 events from t = 0). A stream with fewer than 10w events before or 3w after the onset is recorded as `stream_too_short` (failed, not dropped).
+- Seed roles. Development (pipeline debugging, protocol design): 4000–4002 (P1), 4000 (P2); exploratory (earlier notes): 0–19, 100–199, 1000+, 5000+, 6000+, 7000–7019, 8000–8199; official: 2000–2019 and 2100–2119. No official seed has been used for anything else. TGN seed = stream seed.
+- Hardware: TGN on CUDA if `torch.cuda.mem_get_info()` reports ≥ 2.5 GB free, else CPU; peak allocated memory is logged. Other processes are never touched.
+
+## 3. Statistics and standardisation (per stream)
+Notation: reference windows $R_0..R_9$; for a reference window $j$ the *pool* is the other nine; for a test window the pool is $R_1..R_9$ (the nine most recent): both pools have nine windows, so reference and test statistics are size-matched.
+1. **γ**: $s_\gamma^{(1)}=1-J(V_a,V_{pool})$, $s_\gamma^{(2)}=|V_a\setminus V_{pool}|/|V_a|$ over all active nodes (both sides).
+2. **β**: $P=V_a\cap V_{pool}$; $\hat\rho_a$ = KPM DoS of $G_a[P]$ (100 moments, 200 probes, fixed per-window probe seed); $\bar\rho$ = mean of the pool windows' DoS, each computed on its own persistent subgraph (persistent w.r.t. the other nine reference windows); $s_\beta=W_1(\hat\rho_a,\bar\rho)$.
+3. **α**: events of $a$ and of every pool window with both endpoints in $P$; degree-pair buckets (3 log bins) computed per window; $s_\alpha$ = bucket-share-weighted linear-time RBF MMD² (median bandwidth on the pooled reference marks), buckets with < 20 events on a side skipped.
+4. **Reference series** $s_c(j)$, $j=0..9$ (leave-one-out) → **moving-block bootstrap** (overlapping blocks of length 2, 5 blocks per replicate truncated to 10, 500 replicates, seed from the stream seed): $\hat\mu$ = mean of replicate means, $\hat\sigma$ = $\sqrt{\text{mean of replicate variances}}$ (ddof 1). 2.5/97.5% percentiles of replicate means and standard deviations are stored as the uncertainty of the standardisation. $z_c=(s_c-\hat\mu_c)/\hat\sigma_c$; $z_\gamma=\max$ of the two component z-scores.
+5. **Resolution floor (addition, γ components only):** $\hat\sigma\leftarrow\max(\hat\sigma,\,1/\bar n)$ with $\bar n$ the mean number of active nodes (new-node rate) or of pooled active nodes ($1-J$). Reason: on dense windows (P1, P3) every node is active in every pool, so the new-node rate is identically 0 and σ = 0 (observed: all 15 first dev streams failed with "zero variance"). Consequence: $z_\gamma$ for a real turnover is very large (≈ 100 in dev) and its scale is set by the floor, not by data; the *argmax* is robust to this, the audit-matrix magnitudes in the γ column are not comparable with the other columns. α, β and δ have no floor (a degenerate series fails the stream).
+6. **δ**: per-event prequential loss of a feature-aware TGN (memory 32, lr 3e-3, batch 200, one negative per event from destinations known so far, loss recorded before the gradient step, memory updated after scoring; `tests/test_prequential_causality.py` shows past losses are unaffected by future events and future entities' features). Window loss ℓ = mean per-event loss. $\mathbf w$ = Huber fit (`HuberRegressor`, α = 1e-4) of $\ell_j$ on $[z_\alpha(j),z_\beta(j),z_\gamma(j)]$ + intercept over the ten reference windows; reference residuals are leave-one-out (refit without window j) and bootstrapped like the other series; $s_\delta=\ell_a-\mathbf w^\top[z_\alpha,z_\beta,z_\gamma,1]$ with the test window's own z; $z_\delta$ standardised with the residual moments. (Known property, not corrected: the linear model extrapolates, so a very large $z_\gamma$ produces a very large, uninformative $s_\delta$.)
+7. **Test windows**: $T_0$ (primary), mean of $z$ over $T_0..T_2$ (separately labelled sensitivity). Reference frozen at $R_0..R_9$ for all three.
+
+## 4. Thresholds and rules (fixed)
+- Fire threshold for "a statistic fires" and for detection: $z>3.0$ (one-sided). The Blueprint's CUSUM thresholds $h_c$/ARL₀ belong to Step 3 and are not used.
+- Type decision: argmax of $(z_\alpha,z_\beta,z_\gamma,z_\delta)$ (Blueprint). An exact tie counts as an error. Thresholded variant (reported alongside, not gating): if $\max z\le3$ the decision is "none".
+- **No-detection scoring (defined before the run):** in the gating argmax macro-F1 a classifier always outputs a type, so a missed drift is a wrong label. In the thresholded variant a missed detection is label "none", counted as a false negative for its true class (shown as its own column in the confusion matrix, never dropped). Detection recall counts a drifted stream detected if $\max z>3$ at $T_0$; precision counts a stationary stream with $\max z>3$ at $T_0$ as a false alarm. Delay = index (0 = $T_0$) of the first test window among $T_0..T_2$ with $\max z>3$; streams with none are counted as missed and shown, and the mean delay is reported only over detected streams. False alarms per $10^5$ events = (share of stationary test windows with $\max z>3$) × $10^5/w$.
+- Missing / non-finite values: any NaN/inf statistic, degenerate reference series, `stream_too_short`, or exception ⇒ the stream row is kept with its status; the configuration cannot pass with any failed stream; no seed is replaced or re-drawn. A stream may be re-run with the same seed only for an infrastructure failure (e.g. CUDA out-of-memory), with the first failure kept in the audit trail.
+- Uncertainty: 95% percentile bootstrap (1000 resamples over seeds) for the audit matrix means and for the macro-F1; seed-level rows stay in `results/g1/official/<preset>/*.json`.
+
+## 5. Not part of G1 (deferred, stated so that nothing is implied)
+CUSUM, Bonferroni/ARL₀ calibration, mixed-drift type sets, recurring drift, the ε grid {0.05, 0.1, 0.4} (drift severity), the semi-synthetic TGB injections. G1 specifies ε = 0.2; severity curves belong to the S2 sensitivity study and Step 3.
+
+## 6. Scoring, pass/fail
+1. Audit matrix $M_{c,c'}=\mathbb E[z_{c'}\mid\text{inject }c]$ at $T_0$ with bootstrap CIs. **(a) PASS** iff in each of the four rows the maximum entry is the diagonal one. Column-wise dominance is reported, not gating. (Because of the γ floor the γ column magnitudes are not comparable across columns; the gating test is by row.)
+2. **(b) PASS** iff macro-F1 over the four types (argmax, $T_0$) ≥ 0.80.
+3. **(c) PASS** iff the share of pure α, β, γ streams (60) with $z_\delta>3$ at $T_0$ is ≤ 0.15 (per-type shares also reported).
+4. Per configuration `pass_all = (a) ∧ (b) ∧ (c) ∧ no failed stream`. Overall verdict as in §1.
+5. Supplementary (not gating): thresholded macro-F1, confusion matrices (argmax and thresholded), detection precision/recall, missed detections, delay, false alarms per $10^5$ events, δ-statistic AUROC (δ vs all other streams incl. stationary), 3-window sensitivity, δ[mix] secondary experiment (mean $z_\delta$, fire rate, its effect on $z_\beta$), persistent-event counts (`pers_events_*`) and loss/σ diagnostics per stream.
+
+## 7. Runtime and memory (estimates from dev, 3 seeds; recorded per stream in the rows)
+P1/P3 ≈ 15 s per stream (13 s TGN, ≈ 1 s statistics), peak ≈ 0.03 GB VRAM; P2 ≈ 70 s per stream (55–60 s TGN, ≈ 12 s statistics), peak ≈ 0.21 GB. Totals: P1 ≈ 35 min, P3 ≈ 35 min, P2 ≈ 2 h.
+
+## 8. Facts known before locking (development seeds only — not results)
+- P1 dev (seeds 4000–4002, 15 streams): all ran; $z_\delta$ for δ = 9.5–21, stationary ≤ 2.2.
+- **β responded strongly to γ** in dev ($z_\beta$ = 28–62 on γ streams) and **$z_\delta$ was erratic on γ** (−56 … +73). Mechanism proposed (not yet verified on official data): removing 20% of sources from the window removes ≈ 20% of the persistent subgraph's edges, so $G_a[P]$ is sparser than the reference subgraphs and its spectrum shifts; and the δ regression extrapolates from $z_\gamma\approx100$. The rows log the persistent-event counts (`pers_events_*`) to check the first explanation. These dev observations did not change any constant: the protocol is the literal Blueprint construction plus the disclosed fills, and a G1 failure from these causes is an expected, reportable outcome.
+- P2 dev (seed 4000, δ and stationary): the TGN reaches only reference loss ≈ 1.03 and $z_\delta$ for δ was 1.3, i.e. δ was not identifiable on this preset in the one dev stream; P2 is run as specified and its result reported.
