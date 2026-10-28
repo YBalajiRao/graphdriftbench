@@ -1,0 +1,424 @@
+{
+ "primary_first_post_window": {
+  "macro_f1_argmax_ci95": [
+   1.0,
+   1.0
+  ],
+  "n_streams": 120,
+  "n_failed": 0,
+  "macro_f1_argmax": 1.0,
+  "f1_by_type": {
+   "alpha": 1.0,
+   "beta": 1.0,
+   "gamma": 1.0,
+   "delta": 1.0
+  },
+  "macro_f1_thresholded": 0.9722222222222222,
+  "f1_thr_by_type": {
+   "alpha": 0.8888888888888888,
+   "beta": 1.0,
+   "gamma": 1.0,
+   "delta": 1.0
+  },
+  "confusion_argmax": {
+   "alpha": {
+    "alpha": 20,
+    "beta": 0,
+    "gamma": 0,
+    "delta": 0
+   },
+   "beta": {
+    "alpha": 0,
+    "beta": 20,
+    "gamma": 0,
+    "delta": 0
+   },
+   "gamma": {
+    "alpha": 0,
+    "beta": 0,
+    "gamma": 20,
+    "delta": 0
+   },
+   "delta": {
+    "alpha": 0,
+    "beta": 0,
+    "gamma": 0,
+    "delta": 20
+   },
+   "none": {
+    "alpha": 0,
+    "beta": 0,
+    "gamma": 0,
+    "delta": 0
+   },
+   "tie": {
+    "alpha": 0,
+    "beta": 0,
+    "gamma": 0,
+    "delta": 0
+   }
+  },
+  "confusion_thresholded": {
+   "alpha": {
+    "alpha": 16,
+    "beta": 0,
+    "gamma": 0,
+    "delta": 0
+   },
+   "beta": {
+    "alpha": 0,
+    "beta": 20,
+    "gamma": 0,
+    "delta": 0
+   },
+   "gamma": {
+    "alpha": 0,
+    "beta": 0,
+    "gamma": 20,
+    "delta": 0
+   },
+   "delta": {
+    "alpha": 0,
+    "beta": 0,
+    "gamma": 0,
+    "delta": 20
+   },
+   "none": {
+    "alpha": 4,
+    "beta": 0,
+    "gamma": 0,
+    "delta": 0
+   },
+   "tie": {
+    "alpha": 0,
+    "beta": 0,
+    "gamma": 0,
+    "delta": 0
+   }
+  },
+  "audit_mean": {
+   "alpha": {
+    "alpha": 4.964330793793211,
+    "beta": 0.1755298952839312,
+    "gamma": 0.5689358916794343,
+    "delta": 0.050327432787321214
+   },
+   "beta": {
+    "alpha": 0.03209357494145128,
+    "beta": 9.919908682192737,
+    "gamma": 40.232687117353535,
+    "delta": 0.6498921692581282
+   },
+   "gamma": {
+    "alpha": 0.4885215269114629,
+    "beta": 1.3852171741998007,
+    "gamma": 100.4383627495831,
+    "delta": 0.8747155791108951
+   },
+   "delta": {
+    "alpha": -0.3703486255588381,
+    "beta": -1.3631453671266394,
+    "gamma": 7.222960824734815,
+    "delta": 29.855649912314515
+   }
+  },
+  "audit_lo": {
+   "alpha": {
+    "alpha": 4.142748655412589,
+    "beta": -0.6060764390210888,
+    "gamma": -0.13564277333665734,
+    "delta": -0.5398592768479212
+   },
+   "beta": {
+    "alpha": -0.42429891534600944,
+    "beta": 8.184918301394084,
+    "gamma": 35.33108763734388,
+    "delta": -0.028903420841682504
+   },
+   "gamma": {
+    "alpha": 0.2082415538229208,
+    "beta": 0.9080507661263668,
+    "gamma": 96.61102179947515,
+    "delta": 0.4906803778971386
+   },
+   "delta": {
+    "alpha": -1.0220545299271886,
+    "beta": -3.369761814052519,
+    "gamma": -14.740111740295339,
+    "delta": 23.75602901011362
+   }
+  },
+  "audit_hi": {
+   "alpha": {
+    "alpha": 5.934511063438745,
+    "beta": 0.8454138296289979,
+    "gamma": 1.3656659886938773,
+    "delta": 0.5625711416839748
+   },
+   "beta": {
+    "alpha": 0.5134500271727626,
+    "beta": 11.731136979279963,
+    "gamma": 46.0107711132276,
+    "delta": 1.4488966781588326
+   },
+   "gamma": {
+    "alpha": 0.7962530269114648,
+    "beta": 1.8830746757689778,
+    "gamma": 103.84096816686446,
+    "delta": 1.3887546764148078
+   },
+   "delta": {
+    "alpha": 0.32629339513288796,
+    "beta": 0.7368478674579699,
+    "gamma": 29.211652126553417,
+    "delta": 36.11991394978926
+   }
+  },
+  "diag_dominant_rows": {
+   "alpha": true,
+   "beta": true,
+   "gamma": true,
+   "delta": true
+  },
+  "diag_dominant_cols": {
+   "alpha": true,
+   "beta": false,
+   "gamma": true,
+   "delta": true
+  },
+  "delta_fire_pooled": 0.23333333333333334,
+  "delta_fire_by_type": {
+   "alpha": 0.0,
+   "beta": 0.1,
+   "gamma": 0.6
+  },
+  "delta_auroc_vs_rest": 0.890625,
+  "detection_precision": 0.9620253164556962,
+  "detection_recall": 0.95,
+  "missed": 4,
+  "false_alarm_streams": 3,
+  "detected_first_in_window": {
+   "0": 76,
+   "1": 2,
+   "2": 1
+  },
+  "missed_within_n_post": 1,
+  "mean_delay_windows_detected": 0.05063291139240506,
+  "false_alarms_per_1e5_events": 5.0,
+  "pass_a_diag_dominant": true,
+  "pass_b_macro_f1": true,
+  "pass_c_delta_fire": false,
+  "pass_all": false
+ },
+ "sensitivity_mean_first3_windows": {
+  "macro_f1_argmax_ci95": [
+   1.0,
+   1.0
+  ],
+  "n_streams": 120,
+  "n_failed": 0,
+  "macro_f1_argmax": 1.0,
+  "f1_by_type": {
+   "alpha": 1.0,
+   "beta": 1.0,
+   "gamma": 1.0,
+   "delta": 1.0
+  },
+  "macro_f1_thresholded": 0.9868421052631579,
+  "f1_thr_by_type": {
+   "alpha": 0.9473684210526315,
+   "beta": 1.0,
+   "gamma": 1.0,
+   "delta": 1.0
+  },
+  "confusion_argmax": {
+   "alpha": {
+    "alpha": 20,
+    "beta": 0,
+    "gamma": 0,
+    "delta": 0
+   },
+   "beta": {
+    "alpha": 0,
+    "beta": 20,
+    "gamma": 0,
+    "delta": 0
+   },
+   "gamma": {
+    "alpha": 0,
+    "beta": 0,
+    "gamma": 20,
+    "delta": 0
+   },
+   "delta": {
+    "alpha": 0,
+    "beta": 0,
+    "gamma": 0,
+    "delta": 20
+   },
+   "none": {
+    "alpha": 0,
+    "beta": 0,
+    "gamma": 0,
+    "delta": 0
+   },
+   "tie": {
+    "alpha": 0,
+    "beta": 0,
+    "gamma": 0,
+    "delta": 0
+   }
+  },
+  "confusion_thresholded": {
+   "alpha": {
+    "alpha": 18,
+    "beta": 0,
+    "gamma": 0,
+    "delta": 0
+   },
+   "beta": {
+    "alpha": 0,
+    "beta": 20,
+    "gamma": 0,
+    "delta": 0
+   },
+   "gamma": {
+    "alpha": 0,
+    "beta": 0,
+    "gamma": 20,
+    "delta": 0
+   },
+   "delta": {
+    "alpha": 0,
+    "beta": 0,
+    "gamma": 0,
+    "delta": 20
+   },
+   "none": {
+    "alpha": 2,
+    "beta": 0,
+    "gamma": 0,
+    "delta": 0
+   },
+   "tie": {
+    "alpha": 0,
+    "beta": 0,
+    "gamma": 0,
+    "delta": 0
+   }
+  },
+  "audit_mean": {
+   "alpha": {
+    "alpha": 5.140104578601686,
+    "beta": 0.2943687645269239,
+    "gamma": 0.258227142922621,
+    "delta": 0.1474202760102091
+   },
+   "beta": {
+    "alpha": 0.13230461601736712,
+    "beta": 9.321940029579215,
+    "gamma": 40.29398338981464,
+    "delta": 0.5207099854946293
+   },
+   "gamma": {
+    "alpha": 0.38368960132179797,
+    "beta": 1.2528278132276065,
+    "gamma": 100.66168375568249,
+    "delta": 1.0245370715649855
+   },
+   "delta": {
+    "alpha": -0.25610854249053816,
+    "beta": -0.7358154345963246,
+    "gamma": 6.1426446298187765,
+    "delta": 17.465927999788224
+   }
+  },
+  "audit_lo": {
+   "alpha": {
+    "alpha": 4.3885989998303865,
+    "beta": -0.06937548780795003,
+    "gamma": -0.16584576950497087,
+    "delta": -0.2235461965858198
+   },
+   "beta": {
+    "alpha": -0.1239540382103009,
+    "beta": 8.195379370553058,
+    "gamma": 35.38184681618443,
+    "delta": -0.020527657522859715
+   },
+   "gamma": {
+    "alpha": 0.2362479229067558,
+    "beta": 0.9685951458705243,
+    "gamma": 96.97755360207984,
+    "delta": 0.7586981725780159
+   },
+   "delta": {
+    "alpha": -0.8137347955859205,
+    "beta": -2.3798802742189884,
+    "gamma": -15.642542772349314,
+    "delta": 13.996888033408176
+   }
+  },
+  "audit_hi": {
+   "alpha": {
+    "alpha": 6.145786375728764,
+    "beta": 0.6148870382847719,
+    "gamma": 0.7236983920192944,
+    "delta": 0.5221701109624347
+   },
+   "beta": {
+    "alpha": 0.39780896304749125,
+    "beta": 10.444308142473387,
+    "gamma": 46.23094248504793,
+    "delta": 1.1039235542926311
+   },
+   "gamma": {
+    "alpha": 0.5343845630728309,
+    "beta": 1.5251901204000917,
+    "gamma": 103.90770766611361,
+    "delta": 1.3694019545424019
+   },
+   "delta": {
+    "alpha": 0.3169145621482441,
+    "beta": 0.9294114554061069,
+    "gamma": 28.11519925775793,
+    "delta": 20.91657538525666
+   }
+  },
+  "diag_dominant_rows": {
+   "alpha": true,
+   "beta": true,
+   "gamma": true,
+   "delta": true
+  },
+  "diag_dominant_cols": {
+   "alpha": true,
+   "beta": false,
+   "gamma": true,
+   "delta": true
+  },
+  "delta_fire_pooled": 0.25,
+  "delta_fire_by_type": {
+   "alpha": 0.0,
+   "beta": 0.15,
+   "gamma": 0.6
+  },
+  "delta_auroc_vs_rest": 0.861875,
+  "detection_precision": 1.0,
+  "detection_recall": 0.975,
+  "missed": 2,
+  "false_alarm_streams": 0,
+  "detected_first_in_window": {
+   "0": 76,
+   "1": 2,
+   "2": 1
+  },
+  "missed_within_n_post": 1,
+  "mean_delay_windows_detected": 0.05063291139240506,
+  "false_alarms_per_1e5_events": 5.0,
+  "pass_a_diag_dominant": true,
+  "pass_b_macro_f1": true,
+  "pass_c_delta_fire": false,
+  "pass_all": false
+ }
+}
