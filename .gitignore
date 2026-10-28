@@ -1,0 +1,12 @@
+data/
+results/raw/
+*.pt
+wandb/
+.hydra/
+outputs/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.coverage
+third_party/
