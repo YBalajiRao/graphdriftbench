@@ -31,6 +31,8 @@ def test_load_tgbl_wiki_counts_and_masks():
     assert len(np.unique(s.src)) == 8_227 and len(np.unique(s.dst)) == 1_000
     assert s.edge_feat.shape == (157_474, 172) and s.edge_feat.dtype == np.float32
     assert s.src.max() < s.dst.min()  # TGB convention: destinations numbered after sources
+    assert s.node_initial is None and s.late_ids is None  # loader output unchanged by id_layout
+    assert s.src.max() < 8_227 <= s.dst.min() and s.dst.max() < 9_227  # dense TGB ids
     assert np.all(np.diff(s.t) >= 0)
     n = len(s)
     assert (d.train_mask.sum(), d.val_mask.sum(), d.test_mask.sum()) == (110_232, 23_621, 23_621)

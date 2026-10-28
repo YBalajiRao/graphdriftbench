@@ -75,11 +75,18 @@ VARIANTS = [
         False,
         {**EXPECTED["gamma"], "new_node_rate_dst": "shift"},
     ),
-    ("delta", "delta", {}, True, None),
+    ("delta", "delta", {"mode": "permute"}, True, None),  # primary: full permutation, eps = 1
+    (
+        "delta[mix]",  # secondary sensitivity: B <- (1-eps)B + eps B P^T at the run's eps
+        "delta",
+        {"mode": "mix"},
+        False,
+        {**EXPECTED["delta"], "dos_w1": "info"},
+    ),
     (
         "delta[+flip]",
         "delta",
-        {"flip_homophily": True},
+        {"mode": "permute", "flip_homophily": True},
         False,
         {**EXPECTED["delta"], "deg_ks_src": "info", "deg_ks_dst": "info", "dos_w1": "info"},
     ),
@@ -196,7 +203,8 @@ def run_injection(
     for s in seeds:
         sched = None
         if drift_type != "none":
-            sched = abrupt(drift_type, _horizon(cfg, w) / 2, eps, **params)
+            full = drift_type == DELTA and params.get("mode", "permute") == "permute"
+            sched = abrupt(drift_type, _horizon(cfg, w) / 2, 1.0 if full else eps, **params)
         rows.append(
             {"type": drift_type, "seed": s, **_run_one(cfg, w, s, sched, **(stat_kw or {}))}
         )

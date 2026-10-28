@@ -357,3 +357,42 @@ def turnover_stats(
         "new_node_rate_src": new_node_rate(src_k, src_ref),
         "new_node_rate_dst": new_node_rate(dst_k, dst_ref),
     }
+
+
+# ----------------------------------------------------------------------------------------------
+# Candidate beta statistics (EXPLORATORY: not part of the locked detector, see docs/progress)
+# ----------------------------------------------------------------------------------------------
+
+
+def bipartite_sv_spectrum(src: np.ndarray, dst: np.ndarray) -> np.ndarray:
+    r"""Scaled singular values $\sigma_i/\sqrt{m}$ of the binary window biadjacency matrix $A$.
+
+    $A\in\{0,1\}^{|U|\times|V|}$ has $m$ ones (multi-edges collapsed), so
+    $\sum_i\sigma_i^2=\lVert A\rVert_F^2=m$ and the scaled values lie in $[0,1]$. Computed from the
+    eigenvalues of the smaller Gram matrix ($AA^\top$ or $A^\top A$), cost $O(\min(|U|,|V|)^3)$.
+    This is the LAD-style singular-value embedding used as the alternative in ablation A5.
+    """
+    pairs = np.unique(np.stack([np.asarray(src), np.asarray(dst)], axis=1), axis=0)
+    if len(pairs) == 0:
+        return np.zeros(0)
+    u = np.unique(pairs[:, 0], return_inverse=True)[1]
+    v = np.unique(pairs[:, 1], return_inverse=True)[1]
+    a = sp.coo_matrix((np.ones(len(pairs)), (u, v))).tocsr()
+    gram = (a.T @ a) if a.shape[1] <= a.shape[0] else (a @ a.T)
+    ev = np.linalg.eigvalsh(gram.toarray())
+    return np.sqrt(np.clip(ev, 0.0, None) / len(pairs))
+
+
+def sv_w1(src_a: np.ndarray, dst_a: np.ndarray, src_b: np.ndarray, dst_b: np.ndarray) -> float:
+    r"""$W_1$ between the scaled singular-value spectra of two window biadjacency matrices."""
+    sa, sb = bipartite_sv_spectrum(src_a, dst_a), bipartite_sv_spectrum(src_b, dst_b)
+    if len(sa) == 0 or len(sb) == 0:
+        return float("nan")
+    return float(wasserstein_distance(sa, sb))
+
+
+def concentration_index(nodes: np.ndarray) -> float:
+    r"""Herfindahl index $H=\sum_v p_v^2$, $p_v$ = share of the window's events at node $v$."""
+    _, c = np.unique(np.asarray(nodes), return_counts=True)
+    p = c / c.sum()
+    return float((p**2).sum())

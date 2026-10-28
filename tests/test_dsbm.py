@@ -34,6 +34,7 @@ def test_same_seed_identical_stream_hash_and_different_seed_differs(tiny_cfg):
 
 
 def test_bipartite_conventions(tiny_cfg):
+    tiny_cfg = replace(tiny_cfg, id_layout="legacy")  # legacy id-convention test
     res = generate_stream(tiny_cfg)
     s = res.stream
     assert s.src.max() < tiny_cfg.n_src <= s.dst.min()  # sources 0..N_src-1, destinations after
@@ -91,6 +92,7 @@ def test_alpha_shifts_only_the_mark_mean(tiny_cfg):
 
 
 def test_gamma_old_ids_stop_and_fresh_ids_appear(tiny_cfg):
+    tiny_cfg = replace(tiny_cfg, id_layout="legacy")  # legacy id-convention test
     cfg = replace(tiny_cfg, t_end=200.0, base_rate=200.0)
     res = generate_stream(cfg, sch.abrupt("gamma", 100.0, 0.25))  # default side: sources
     s = res.stream
@@ -105,6 +107,7 @@ def test_gamma_old_ids_stop_and_fresh_ids_appear(tiny_cfg):
 
 
 def test_gamma_both_sides_and_dst_option(tiny_cfg):
+    tiny_cfg = replace(tiny_cfg, id_layout="legacy")  # legacy id-convention test
     cfg = replace(tiny_cfg, t_end=200.0, base_rate=200.0)
     n0 = cfg.n_src + cfg.n_dst
     s = generate_stream(cfg, sch.abrupt("gamma", 100.0, 0.2, side="both")).stream
@@ -129,6 +132,7 @@ def test_delta_full_permutation_permutes_block_pair_counts(small_cfg):
 
 
 def test_gradual_ramp_increases_effective_churn_monotonically(tiny_cfg):
+    tiny_cfg = replace(tiny_cfg, id_layout="legacy")  # legacy id-convention test
     cfg = replace(tiny_cfg, t_end=300.0, base_rate=200.0)
     res = generate_stream(cfg, sch.gradual("gamma", 100.0, 0.4, ramp_width=100.0, ramp_steps=10))
     s, n0 = res.stream, cfg.n_src + cfg.n_dst
@@ -140,6 +144,7 @@ def test_gradual_ramp_increases_effective_churn_monotonically(tiny_cfg):
 
 
 def test_recurring_gamma_brings_original_ids_back(tiny_cfg):
+    tiny_cfg = replace(tiny_cfg, id_layout="legacy")  # legacy id-convention test
     cfg = replace(tiny_cfg, t_end=300.0, base_rate=200.0)
     res = generate_stream(cfg, sch.recurring("gamma", 100.0, 200.0, 0.3))
     s, n0 = res.stream, cfg.n_src + cfg.n_dst
@@ -161,6 +166,7 @@ def test_recurring_delta_restores_block_pair_counts(small_cfg):
 
 
 def test_mixed_drift_applies_all_components(tiny_cfg):
+    tiny_cfg = replace(tiny_cfg, id_layout="legacy")  # legacy id-convention test
     cfg = replace(tiny_cfg, t_end=200.0, base_rate=200.0)
     res = generate_stream(cfg, sch.mixed(["alpha", "gamma"], 100.0, 0.3))
     s, n0 = res.stream, cfg.n_src + cfg.n_dst
@@ -194,9 +200,11 @@ def test_wiki_like_preset_shape(small_cfg):
     )
     assert (cfg.n_src, cfg.n_dst, cfg.d_edge) == (8227, 1000, 172)
     assert cfg.base_rate * cfg.t_end == pytest.approx(157474, rel=1e-3)
-    res = generate_stream(replace(cfg, t_end=20.0))  # ~3K events: shape check only
+    res = generate_stream(replace(cfg, t_end=20.0, id_layout="legacy"))  # ~3K events: shape check
     s = res.stream
     assert s.edge_feat.shape[1] == 172 and s.src.max() < 8227 <= s.dst.min() and s.dst.max() < 9227
+    r2 = generate_stream(replace(cfg, t_end=20.0)).stream  # default: reserved ranges
+    assert cfg.id_layout == "reserved" and r2.src.max() < cfg.capacity(8227) <= r2.dst.min()
 
 
 def test_delta_refuses_to_be_a_silent_noop(tiny_cfg):

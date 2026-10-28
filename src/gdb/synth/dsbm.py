@@ -65,10 +65,18 @@ class DSBMConfig:
     pop_dst: dict = field(default_factory=lambda: {"kind": "none"})
     window_events: int = 2000  # default analysis window w (events)
     seed: int = 0
+    # Id layout (default "reserved"; "legacy" is kept for backward compatibility). "legacy": fresh ids from node churn are appended after all initial ids (ranges mix,
+    # table size reveals eps). "reserved": each side owns a fixed id range of size
+    # ceil((1 + id_headroom) * n) chosen from the config only (never from the schedule); fresh ids
+    # are allocated inside the owner's range, and the node table has a fixed size.
+    id_layout: str = "reserved"
+    id_headroom: float = 1.0
 
     def __post_init__(self) -> None:
         if self.mode not in ("bipartite", "unipartite"):
             raise ValueError("mode must be 'bipartite' or 'unipartite'")
+        if self.id_layout not in ("legacy", "reserved"):
+            raise ValueError("id_layout must be 'legacy' or 'reserved'")
         if self.mode == "unipartite":
             self.n_dst, self.k_dst = self.n_src, self.k_src
 
@@ -82,6 +90,10 @@ class DSBMConfig:
 
     def to_dict(self) -> dict:
         return asdict(self)
+
+    def capacity(self, n: int) -> int:
+        """Size of one side's id range under the reserved layout."""
+        return int(np.ceil((1.0 + self.id_headroom) * n))
 
     @property
     def unipartite(self) -> bool:
@@ -245,10 +257,11 @@ def generate_stream(cfg: DSBMConfig, schedule: DriftSchedule | None = None) -> S
             n, k, labels, starts, theta, np.arange(id0, id0 + n, dtype=np.int64), _unit(x), role
         )
 
+    reserved = cfg.id_layout == "reserved"
+    cap_s = cfg.capacity(cfg.n_src) if reserved else cfg.n_src
+    cap_d = cfg.capacity(cfg.n_dst) if reserved else cfg.n_dst
     src_side = build_side(cfg.n_src, cfg.k_src, 0, cfg.pop_src, ROLE_SRC)
-    dst_side = (
-        src_side if uni else build_side(cfg.n_dst, cfg.k_dst, cfg.n_src, cfg.pop_dst, ROLE_DST)
-    )
+    dst_side = src_side if uni else build_side(cfg.n_dst, cfg.k_dst, cap_s, cfg.pop_dst, ROLE_DST)
     sides = {"src": src_side, "dst": dst_side}
     n_initial = cfg.n_src if uni else cfg.n_src + cfg.n_dst
     B0 = make_block_matrix(cfg.block_matrix, cfg.k_src, cfg.k_dst)
@@ -261,9 +274,12 @@ def generate_stream(cfg: DSBMConfig, schedule: DriftSchedule | None = None) -> S
     resolved: list[dict] = []  # JSON-able summary written to drift_truth.csv
     res_inj: list[dict] = []  # full objects used by the injectors
     node_feat_extra: list[np.ndarray] = []
+    fresh_ids: list[np.ndarray] = []
     node_block_extra: list[np.ndarray] = []
     node_role_extra: list[np.ndarray] = []
-    next_id = n_initial
+    next_id = n_initial  # legacy: one shared counter
+    next_by_side = {"src": cfg.n_src, "dst": cap_s + cfg.n_dst}  # reserved: per-side counters
+    limit_by_side = {"src": cap_s, "dst": cap_s + cap_d}
     for i, ev in enumerate(events):
         rg = rng_ev[i]
         if ev.type == ALPHA:
@@ -292,19 +308,38 @@ def generate_stream(cfg: DSBMConfig, schedule: DriftSchedule | None = None) -> S
                 sd = sides[name]
                 n_max = int(np.floor(ev.eps * sd.n))
                 slots = rg.permutation(sd.n)[:n_max]
-                ids = np.arange(next_id, next_id + n_max, dtype=np.int64)
+                if reserved:
+                    first = next_by_side[name]
+                    if first + n_max > limit_by_side[name]:
+                        raise ValueError(
+                            f"churn needs more fresh {name} ids than id_headroom={cfg.id_headroom} allows"
+                        )
+                    next_by_side[name] += n_max
+                else:
+                    first = next_id
+                ids = np.arange(first, first + n_max, dtype=np.int64)
                 x = mu[sd.labels[slots]] + cfg.node_sigma * rg.normal(size=(n_max, cfg.d_node))
                 per_side[name] = {"slots": slots, "ids": ids, "unit": _unit(x)}
                 node_feat_extra.append(x.astype(np.float32))
                 node_block_extra.append(sd.labels[slots].astype(np.int64))
                 node_role_extra.append(np.full(n_max, sd.role, dtype=np.int8))
-                summary[name] = {"n_max": n_max, "id_start": int(next_id)}
-                next_id += n_max
+                fresh_ids.append(ids)
+                summary[name] = {"n_max": n_max, "id_start": int(first)}
+                if not reserved:
+                    next_id += n_max
             res_inj.append(
                 {"sides": names, "n_side": {k: sides[k].n for k in names}, "per_side": per_side}
             )
             resolved.append({"sides": summary})
         else:  # DELTA
+            mode = ev.params.get("mode", "permute")
+            if mode not in ("permute", "mix"):
+                raise ValueError("delta mode must be 'permute' (primary) or 'mix' (sensitivity)")
+            if mode == "permute" and (ev.eps != 1.0 or ev.onset != "abrupt"):
+                raise ValueError(
+                    "delta mode='permute' is a full permutation: use eps=1.0 and an abrupt onset "
+                    "(or mode='mix' for a magnitude)"
+                )
             # A permutation that leaves B unchanged is a silent no-op (e.g. an assortative
             # unipartite B is invariant under any block relabelling): redraw, else refuse.
             for _attempt in range(50):
@@ -321,10 +356,12 @@ def generate_stream(cfg: DSBMConfig, schedule: DriftSchedule | None = None) -> S
                     "perm": perm,
                     "unipartite": uni,
                     "flip_homophily": bool(ev.params.get("flip_homophily", False)),
+                    "mode": mode,
                 }
             )
             resolved.append(
                 {
+                    "mode": mode,
                     "perm": perm.tolist(),
                     "flip_homophily": bool(ev.params.get("flip_homophily", False)),
                 }
@@ -344,6 +381,26 @@ def generate_stream(cfg: DSBMConfig, schedule: DriftSchedule | None = None) -> S
         [np.full(s.n, s.role, dtype=np.int8) for s in ([src_side] if uni else [src_side, dst_side])]
         + node_role_extra
     )
+    node_initial = late_ids = late_feat = None
+    if reserved:  # fixed-size tables indexed by id; unallocated rows are zero / -1 / not initial
+        base_ids = np.concatenate(
+            [s.base_ids for s in ([src_side] if uni else [src_side, dst_side])]
+        )
+        all_ids = np.concatenate([base_ids] + fresh_ids)
+        n_tab = cap_s if uni else cap_s + cap_d
+        role_tab = np.full(n_tab, ROLE_SRC, dtype=np.int8)
+        role_tab[cap_s:] = ROLE_DST  # empty for unipartite
+        feat_tab = np.zeros((n_tab, node_feat.shape[1]), dtype=np.float32)
+        block_tab = np.full(n_tab, -1, dtype=np.int64)
+        feat_tab[all_ids], block_tab[all_ids] = node_feat, node_block
+        node_initial = np.zeros(n_tab, dtype=bool)
+        node_initial[base_ids] = True
+        late_ids = np.flatnonzero(~node_initial & (block_tab >= 0))
+        late_feat = feat_tab[late_ids].copy()
+        feat_tab[late_ids] = (
+            0.0  # fresh entities' features leave the table; StreamReader releases them
+        )
+        node_feat, node_block, node_role = feat_tab, block_tab, role_tab
 
     # --- time pieces --------------------------------------------------------------------
     pts = {0.0, float(cfg.t_end)}
@@ -436,6 +493,9 @@ def generate_stream(cfg: DSBMConfig, schedule: DriftSchedule | None = None) -> S
         node_feat=node_feat,
         node_ids=np.arange(len(node_feat), dtype=np.int64),
         node_role=node_role,
+        node_initial=node_initial,
+        late_ids=late_ids,
+        late_feat=late_feat,
     )
     return SynthResult(stream, schedule, resolved, node_block, cfg)
 

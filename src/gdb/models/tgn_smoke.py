@@ -70,6 +70,7 @@ def run_tgn_smoke(
     seed: int = 0,
     lr: float = 1e-3,
     min_free_gb: float = 2.5,
+    use_node_feat: bool = False,
 ) -> dict:
     """Train TGN for ``epochs`` on the first 85% of ``stream``, report loss, AP on the rest and VRAM.
 
@@ -90,6 +91,13 @@ def run_tgn_smoke(
         device
     )  # destinations seen in training
     msg_dim = data.msg.size(-1)
+    node_feat = node_proj = None
+    if use_node_feat:  # static per-node features added to the memory state before the GNN
+        if stream.node_feat is None:
+            raise ValueError("use_node_feat needs stream.node_feat")
+        # smoke test only: the table after the whole stream (offline); Step 4 uses StreamReader
+        node_feat = torch.from_numpy(stream.observed_node_table(len(stream))[0]).to(device)
+        node_proj = Linear(node_feat.size(1), memory_dim).to(device)
 
     memory = TGNMemory(
         n_nodes,
@@ -101,8 +109,9 @@ def run_tgn_smoke(
     ).to(device)
     gnn = _Embedding(memory_dim, memory_dim, msg_dim, memory.time_enc).to(device)
     pred = _Predictor(memory_dim).to(device)
+    extra = list(node_proj.parameters()) if node_proj is not None else []
     params = {
-        id(q): q for q in [*memory.parameters(), *gnn.parameters(), *pred.parameters()]
+        id(q): q for q in [*memory.parameters(), *gnn.parameters(), *pred.parameters(), *extra]
     }  # time_enc is shared
     opt = torch.optim.Adam(list(params.values()), lr=lr)
     loader_nb = LastNeighborLoader(n_nodes, size=10, device=device)
@@ -115,6 +124,8 @@ def run_tgn_smoke(
         n_id, edge_index, e_id = loader_nb(n_id)
         assoc[n_id] = torch.arange(n_id.size(0), device=device)
         z, last_update = memory(n_id)
+        if node_proj is not None:
+            z = z + node_proj(node_feat[n_id])
         z = gnn(z, last_update, edge_index, data.t[e_id], data.msg[e_id])
         pos = pred(z[assoc[batch.src]], z[assoc[batch.dst]])
         neg_out = pred(z[assoc[batch.src]], z[assoc[neg]])
@@ -131,6 +142,8 @@ def run_tgn_smoke(
     losses = []
     for _ in range(epochs):
         memory.train(), gnn.train(), pred.train()
+        if node_proj is not None:
+            node_proj.train()
         memory.reset_state()
         loader_nb.reset_state()
         total = 0.0
@@ -141,6 +154,8 @@ def run_tgn_smoke(
         losses.append(total / train_data.num_events)
 
     memory.eval(), gnn.eval(), pred.eval()
+    if node_proj is not None:
+        node_proj.eval()
     ys, ps = [], []
     with torch.no_grad():
         for batch in TemporalDataLoader(test_data, batch_size=batch_size):

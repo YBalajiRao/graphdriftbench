@@ -1,0 +1,22 @@
+# Learnable stream for Step 4 / Gate G2 (development preset; exploratory until approved).
+# Informative static node features (block mean + noise, node_sigma 0.3) and a sharper block law
+# (p_out 0.02) so that a TGN with node features has a measurable pre-drift signal.
+mode: bipartite
+n_src: 300
+n_dst: 150
+k_src: 4
+k_dst: 4
+block_matrix: {kind: assortative, p_in: 1.0, p_out: 0.02}
+base_rate: 150.0
+t_end: 100.0
+d_node: 8
+node_sigma: 0.3
+beta_h: 2.0
+d_edge: 32
+edge_sigma: 1.0
+pop_src: {kind: none}
+pop_dst: {kind: none}
+window_events: 2000
+seed: 0
+id_layout: reserved
+id_headroom: 1.0

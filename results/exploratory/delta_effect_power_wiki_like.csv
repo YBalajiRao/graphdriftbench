@@ -1,0 +1,6 @@
+variant,deg_ks_src,deg_ks_dst,dos_w1,mark_mmd,blockpair_chi2,new_node_rate_src,new_node_rate_dst,sv_w1,hhi_dst_abs,hhi_src_abs
+none,1/20,3/20,0/20,2/20,1/20,1/20,0/20,1/20,0/20,0/20
+delta[permute],0/20,1/20,0/20,2/20,20/20,1/20,0/20,1/20,0/20,1/20
+delta[permute+flip],0/20,3/20,0/20,2/20,20/20,0/20,0/20,2/20,0/20,0/20
+"delta[mix,0.2]",2/20,0/20,2/20,1/20,20/20,0/20,0/20,2/20,2/20,0/20
+"beta[hub,0.2]",10/20,3/20,1/20,2/20,20/20,0/20,0/20,10/20,8/20,2/20

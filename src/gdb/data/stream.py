@@ -31,6 +31,11 @@ class EventStream:
         node_initial: optional ``(n_nodes,)`` bool. ``True`` = entity known at the start of the
             stream; ``False`` = reserved id whose entity (and features) may only be used after its
             first event (see :meth:`observed_node_table`). ``None`` (legacy layout) = all known.
+        late_ids, late_feat: features of the non-initial entities, kept OUT of ``node_feat`` (whose
+            rows for those ids are zero). A learner must obtain them only through
+            :class:`StreamReader`, which releases an entity's features with the batch of its first
+            event. These arrays exist in the container (it is an offline file); they must never be
+            read directly by ``gdb.cl`` / ``gdb.detect`` (a test greps for it).
     """
 
     src: np.ndarray
@@ -41,6 +46,8 @@ class EventStream:
     node_ids: np.ndarray | None = None
     node_role: np.ndarray | None = None
     node_initial: np.ndarray | None = None
+    late_ids: np.ndarray | None = None
+    late_feat: np.ndarray | None = None
 
     def __post_init__(self) -> None:
         self.src = np.ascontiguousarray(self.src, dtype=np.int64)
@@ -72,6 +79,8 @@ class EventStream:
             self.node_ids,
             self.node_role,
             self.node_initial,
+            self.late_ids,
+            self.late_feat,
         )
 
     def observed_node_table(self, upto: int) -> tuple[np.ndarray, np.ndarray]:
@@ -87,7 +96,11 @@ class EventStream:
         known = np.ones(n, dtype=bool) if self.node_initial is None else self.node_initial.copy()
         known[self.src[:upto]] = True
         known[self.dst[:upto]] = True
-        return np.where(known[:, None], self.node_feat, 0.0).astype(np.float32), known
+        feat = self.node_feat.copy()
+        if self.late_ids is not None:
+            seen = known[self.late_ids]
+            feat[self.late_ids[seen]] = self.late_feat[seen]
+        return np.where(known[:, None], feat, 0.0).astype(np.float32), known
 
     def hash(self) -> str:
         """SHA-256 over events, features and node tables (reproducibility checks)."""
@@ -101,6 +114,8 @@ class EventStream:
             self.node_ids,
             self.node_role,
             self.node_initial,
+            self.late_ids,
+            self.late_feat,
         ):
             if arr is not None:
                 h.update(np.ascontiguousarray(arr).tobytes())
@@ -140,3 +155,62 @@ class EventStream:
 
         d = torch.load(path, weights_only=True)
         return cls(**{k: v.numpy() for k, v in d.items()})
+
+
+@dataclass
+class Batch:
+    """One chunk of events plus the node features legitimately revealed with it.
+
+    ``new_ids``/``new_feat`` are the non-initial entities whose first event is in this batch.
+    """
+
+    src: np.ndarray
+    dst: np.ndarray
+    t: np.ndarray
+    edge_feat: np.ndarray
+    new_ids: np.ndarray
+    new_feat: np.ndarray
+
+
+class StreamReader:
+    """Learner-facing access to an :class:`EventStream`: no future entities, no future features.
+
+    * :meth:`initial_table` returns the node table known at time 0: fixed size (the id capacity of
+      the config, independent of the schedule and of epsilon), features of initial entities,
+      zeros elsewhere, plus ``role`` and ``initial`` flags.
+    * :meth:`batches` yields events in order together with the features of entities appearing for
+      the first time in that batch.
+    """
+
+    def __init__(self, stream: EventStream) -> None:
+        self._s = stream
+
+    def initial_table(self) -> tuple[np.ndarray | None, np.ndarray | None, np.ndarray | None]:
+        s = self._s
+        if s.node_feat is None:
+            return None, s.node_role, s.node_initial
+        init = s.node_initial if s.node_initial is not None else np.ones(len(s.node_feat), bool)
+        return np.where(init[:, None], s.node_feat, 0.0).astype(np.float32), s.node_role, init
+
+    def batches(self, size: int):
+        s = self._s
+        if s.node_initial is None or s.late_ids is None:
+            seen = np.ones(0, dtype=bool)
+            late_pos = None
+        else:
+            seen = np.zeros(len(s.node_initial), dtype=bool)
+            late_pos = {int(i): k for k, i in enumerate(s.late_ids)}
+        for a in range(0, len(s), size):
+            b = min(a + size, len(s))
+            ids = np.unique(np.concatenate([s.src[a:b], s.dst[a:b]]))
+            if late_pos is None:
+                new, feat = np.zeros(0, np.int64), np.zeros((0, 0), np.float32)
+            else:
+                new = ids[~s.node_initial[ids] & ~seen[ids]]
+                seen[new] = True
+                feat = (
+                    s.late_feat[[late_pos[int(i)] for i in new]]
+                    if len(new)
+                    else np.zeros((0, s.late_feat.shape[1]), np.float32)
+                )
+            yield Batch(s.src[a:b], s.dst[a:b], s.t[a:b], s.edge_feat[a:b], new, feat)

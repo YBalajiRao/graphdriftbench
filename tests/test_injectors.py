@@ -106,9 +106,12 @@ def test_schedule_csv_roundtrip_matches_configured_schedule(tmp_path, tiny_cfg):
         sch.abrupt("alpha", 10.0, 0.2)
         + sch.gradual("beta", 20.0, 0.4, ramp_width=15.0, ramp_steps=5, target="hub", boost=10.0)
         + sch.mixed(
-            ["gamma", "delta"], 30.0, {"gamma": 0.1, "delta": 0.3}, {"gamma": {"side": "both"}}
+            ["gamma", "delta"],
+            30.0,
+            {"gamma": 0.1, "delta": 0.3},
+            {"gamma": {"side": "both"}, "delta": {"mode": "mix"}},
         )
-        + sch.recurring("delta", 40.0, 60.0, 0.5, flip_homophily=True)
+        + sch.recurring("delta", 40.0, 60.0, 0.5, flip_homophily=True, mode="mix")
     )
     res = generate_stream(tiny_cfg, schedule)
     path = tmp_path / "drift_truth.csv"

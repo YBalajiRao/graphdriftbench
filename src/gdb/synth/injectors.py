@@ -9,9 +9,11 @@ $P(V)P(A\mid V)P(X\mid A,V)P(Y\mid A,X,V)$:
 * ``beta``: $B \to (1-\varepsilon)B + \varepsilon B'$ (marks and $\beta_h$ untouched);
 * ``gamma``: a fraction $\varepsilon$ of nodes get fresh ids (same block, same activity, fresh
   features from the block law); old ids stop emitting;
-* ``delta``: $B \to (1-\varepsilon)B + \varepsilon\,BP^\top$ (bipartite; $PBP^\top$ unipartite) for a
-  permutation $P$ of blocks with equal size and equal margin, and optionally
-  $\beta_h \to (1-2\varepsilon)\beta_h$ (homophily flip; at $\varepsilon=1$ it is $-\beta_h$).
+* ``delta`` (primary, ``mode="permute"``, Blueprint §6.1): $B \to BP^\top$ (bipartite; $PBP^\top$
+  unipartite) for a permutation $P$ of blocks with equal size and equal margin, and optionally
+  $\beta_h \to -\beta_h$. It has no magnitude: ``eps`` must be 1 and the onset abrupt.
+  Secondary sensitivity perturbation (``mode="mix"``): $B \to (1-\varepsilon)B + \varepsilon BP^\top$,
+  $\beta_h \to (1-2\varepsilon)\beta_h$. Only the full permutation preserves the spectrum of $B$.
 
 ``eps`` is the injection magnitude; ``r(t) \in [0,1]`` is the onset ramp, so the effective
 magnitude is ``r(t) * eps``. Nothing here is visible to a learner.
@@ -294,10 +296,12 @@ def inject_gamma(reg: Regime, ev: DriftEvent, r: float, res: dict, event_idx: in
 def inject_delta(reg: Regime, ev: DriftEvent, r: float, res: dict) -> Regime:
     r"""Relational-semantic drift: $B \to (1-m)B + mBP^\top$ (bipartite) / $PBP^\top$ (unipartite).
 
-    Block sizes and margins are preserved, so degree distributions are unchanged while *which*
-    block pairs interact changes. With ``flip_homophily``: $\beta_h \to (1-2m)\beta_h$.
+    ``permute`` mode: $m=1$ whenever the injection is active (full permutation). ``mix`` mode:
+    $m=r\varepsilon$. Block sizes and margins are preserved by $P$, so degree laws are unchanged
+    while *which* block pairs interact changes; the spectrum of $B$ is unchanged only for $m=1$.
+    With ``flip_homophily``: $\beta_h \to (1-2m)\beta_h$.
     """
-    m = r * ev.eps
+    m = 1.0 if res.get("mode", "permute") == "permute" else r * ev.eps
     perm = res["perm"]
     permuted = reg.B[perm][:, perm] if res["unipartite"] else reg.B[:, perm]
     beta_h = (1.0 - 2.0 * m) * reg.beta_h if res["flip_homophily"] else reg.beta_h
