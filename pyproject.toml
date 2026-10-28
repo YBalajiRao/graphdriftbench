@@ -1,0 +1,21 @@
+[project]
+name = "gdb"
+version = "0.1.0"
+description = "GraphDriftBench / CSEE: continual learning on drifting continuous-time dynamic graphs"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"
+markers = [
+    "slow: long-running tests (20-seed purity runs, 1M-event runtime, TGB loading, TGN smoke run)",
+]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501", "B905"]

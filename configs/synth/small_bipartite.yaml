@@ -1,0 +1,18 @@
+# Purity-test preset: small, fast, but d_edge=32 so the linear-time MMD has power at eps=0.2.
+mode: bipartite
+n_src: 300
+n_dst: 150
+k_src: 4
+k_dst: 4
+block_matrix: {kind: assortative, p_in: 1.0, p_out: 0.15}
+base_rate: 100.0
+t_end: 100.0
+d_node: 8
+node_sigma: 0.5
+beta_h: 0.5
+d_edge: 32
+edge_sigma: 1.0
+pop_src: {kind: none}
+pop_dst: {kind: none}
+window_events: 2000
+seed: 0

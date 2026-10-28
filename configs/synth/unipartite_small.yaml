@@ -1,0 +1,17 @@
+mode: unipartite
+n_src: 300
+k_src: 4
+# paired blocks (0-1, 2-3): equal margins, but permuting blocks changes who links to whom
+block_matrix:
+  kind: explicit
+  matrix: [[0.15, 1.0, 0.15, 0.15], [1.0, 0.15, 0.15, 0.15], [0.15, 0.15, 0.15, 1.0], [0.15, 0.15, 1.0, 0.15]]
+base_rate: 100.0
+t_end: 100.0
+d_node: 8
+node_sigma: 0.5
+beta_h: 0.5
+d_edge: 32
+edge_sigma: 1.0
+pop_src: {kind: none}
+window_events: 2000
+seed: 0

@@ -1,0 +1,59 @@
+{
+  "window_events": 2000,
+  "n_null": 200,
+  "quantile": 0.95,
+  "config": {
+    "mode": "bipartite",
+    "n_src": 300,
+    "n_dst": 150,
+    "k_src": 4,
+    "k_dst": 4,
+    "block_matrix": {
+      "kind": "assortative",
+      "p_in": 1.0,
+      "p_out": 0.15
+    },
+    "base_rate": 100.0,
+    "t_end": 100.0,
+    "d_node": 8,
+    "node_sigma": 0.5,
+    "beta_h": 0.5,
+    "d_edge": 32,
+    "edge_sigma": 1.0,
+    "pop_src": {
+      "kind": "none"
+    },
+    "pop_dst": {
+      "kind": "none"
+    },
+    "window_events": 2000,
+    "seed": 0
+  },
+  "band": {
+    "deg_ks_src": 0.06610535117056855,
+    "deg_ks_dst": 0.08666666666666667,
+    "dos_w1": 0.005063185327103421,
+    "mark_mmd": 0.005551994972698919,
+    "blockpair_chi2": 26.791659745744802,
+    "new_node_rate_src": 0.006666666666666667,
+    "new_node_rate_dst": 0.0
+  },
+  "null_mean": {
+    "deg_ks_src": 0.04060255899273261,
+    "deg_ks_dst": 0.05623333333333333,
+    "dos_w1": 0.0031159711796037767,
+    "mark_mmd": 7.577454779944129e-05,
+    "blockpair_chi2": 15.693940235322119,
+    "new_node_rate_src": 0.001351842083604558,
+    "new_node_rate_dst": 0.0
+  },
+  "null_sd": {
+    "deg_ks_src": 0.013435586081614175,
+    "deg_ks_dst": 0.01662242032982684,
+    "dos_w1": 0.0010877985550532955,
+    "mark_mmd": 0.0036189132325523997,
+    "blockpair_chi2": 5.971861572552021,
+    "new_node_rate_src": 0.0021961431071196155,
+    "new_node_rate_dst": 0.0
+  }
+}

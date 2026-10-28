@@ -1,0 +1,83 @@
+{
+  "window_events": 2000,
+  "n_null": 200,
+  "quantile": 0.95,
+  "config": {
+    "mode": "unipartite",
+    "n_src": 300,
+    "n_dst": 300,
+    "k_src": 4,
+    "k_dst": 4,
+    "block_matrix": {
+      "kind": "explicit",
+      "matrix": [
+        [
+          0.15,
+          1.0,
+          0.15,
+          0.15
+        ],
+        [
+          1.0,
+          0.15,
+          0.15,
+          0.15
+        ],
+        [
+          0.15,
+          0.15,
+          0.15,
+          1.0
+        ],
+        [
+          0.15,
+          0.15,
+          1.0,
+          0.15
+        ]
+      ]
+    },
+    "base_rate": 100.0,
+    "t_end": 100.0,
+    "d_node": 8,
+    "node_sigma": 0.5,
+    "beta_h": 0.5,
+    "d_edge": 32,
+    "edge_sigma": 1.0,
+    "pop_src": {
+      "kind": "none"
+    },
+    "pop_dst": {
+      "kind": "none"
+    },
+    "window_events": 2000,
+    "seed": 0
+  },
+  "band": {
+    "deg_ks_src": 0.06333333333333334,
+    "deg_ks_dst": 0.06612653288740244,
+    "dos_w1": 0.005166151125403226,
+    "mark_mmd": 0.0062152162980101296,
+    "blockpair_chi2": 24.045567591387112,
+    "new_node_rate_src": 0.006666666666666667,
+    "new_node_rate_dst": 0.006666666666666667
+  },
+  "null_mean": {
+    "deg_ks_src": 0.03891348394466282,
+    "deg_ks_dst": 0.04042964882194529,
+    "dos_w1": 0.0034284875591279753,
+    "mark_mmd": 0.0002108000126588702,
+    "blockpair_chi2": 15.082361012047897,
+    "new_node_rate_src": 0.0013192906295036437,
+    "new_node_rate_dst": 0.0015355143884469827
+  },
+  "null_sd": {
+    "deg_ks_src": 0.01278465894889316,
+    "deg_ks_dst": 0.013523713033701177,
+    "dos_w1": 0.0010544728370112497,
+    "mark_mmd": 0.0038118502308035914,
+    "blockpair_chi2": 5.387875801228132,
+    "new_node_rate_src": 0.0021154210357009766,
+    "new_node_rate_dst": 0.0024556040108545626
+  }
+}
