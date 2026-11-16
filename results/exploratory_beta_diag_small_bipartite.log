@@ -1,0 +1,11 @@
+preset=small_bipartite w=2000 eps=0.2 n_null=200 n_seeds=20
+mean seconds per window pair: {'dos_w1': 0.084, 'sv_w1': 0.006}
+              dos_w1  sv_w1 hhi_dst_abs hhi_src_abs
+variant                                            
+none            1/20   0/20        2/20        2/20
+beta[hub]      20/20  20/20       20/20       20/20
+beta[merge]     1/20   2/20        0/20        4/20
+beta[densify]   0/20   6/20        3/20        2/20
+alpha           1/20   1/20        0/20        1/20
+gamma[src]      0/20   2/20        3/20        0/20
+delta           1/20  15/20        1/20        1/20

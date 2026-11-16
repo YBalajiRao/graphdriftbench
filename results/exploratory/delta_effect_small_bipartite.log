@@ -1,0 +1,12 @@
+C:\Users\Amma\anaconda3\envs\gdb\Lib\site-packages\scipy\stats\_axis_nan_policy.py:592: RuntimeWarning: ks_2samp: Exact calculation unsuccessful. Switching to method=asymp.
+  res = hypotest_fun_out(*samples, **kwds)
+C:\Users\Amma\anaconda3\envs\gdb\Lib\site-packages\scipy\stats\_axis_nan_policy.py:592: RuntimeWarning: ks_2samp: Exact calculation unsuccessful. Switching to method=asymp.
+  res = hypotest_fun_out(*samples, **kwds)
+preset=small_bipartite w=2000 n_null=200 n_seeds=20 (seeds outside q95 band)
+                    deg_ks_src deg_ks_dst dos_w1 mark_mmd blockpair_chi2 new_node_rate_src new_node_rate_dst  sv_w1 hhi_dst_abs hhi_src_abs
+variant                                                                                                                                    
+none                      1/20       2/20   1/20     1/20           0/20              1/20              0/20   0/20        2/20        2/20
+delta[permute]            1/20       2/20   1/20     1/20          20/20              0/20              0/20   0/20        0/20        1/20
+delta[permute+flip]       4/20       0/20   2/20     2/20          20/20              0/20              0/20   2/20        2/20        4/20
+delta[mix,0.2]            2/20       3/20   1/20     2/20          20/20              0/20              0/20  15/20        1/20        1/20
+beta[hub,0.2]            19/20      20/20  20/20     2/20          20/20              0/20              0/20  20/20       20/20       20/20

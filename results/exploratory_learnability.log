@@ -1,0 +1,5 @@
+{'variant': 'uniform_block_beta_h0.5', 'n_events': 14885, 'oracle_ap': 0.6589197420443809, 'tgn_ap_nofeat': 0.5012968144311178, 'loss_end_nofeat': 1.3861805619297998, 'tgn_ap_feat': 0.6971872261413673, 'loss_end_feat': 1.1958288817024292}
+{'variant': 'uniform_block_beta_h2', 'n_events': 15052, 'oracle_ap': 0.6686840582180376, 'tgn_ap_nofeat': 0.5038508988733974, 'loss_end_nofeat': 1.3859848077360197, 'tgn_ap_feat': 0.7034294455374812, 'loss_end_feat': 1.175793445257539}
+{'variant': 'sharp_block (p_out=0.02)', 'n_events': 14873, 'oracle_ap': 0.7814725841967184, 'tgn_ap_nofeat': 0.5, 'loss_end_nofeat': 1.3862807919303557, 'tgn_ap_feat': 0.7737537703255403, 'loss_end_feat': 0.8354670452064511}
+{'variant': 'sharp_block+beta_h2', 'n_events': 14886, 'oracle_ap': 0.7717492903777581, 'tgn_ap_nofeat': 0.49889362873143267, 'loss_end_nofeat': 1.3949253262055021, 'tgn_ap_feat': 0.8009729951180928, 'loss_end_feat': 0.8259021038407254}
+{'variant': 'pareto_popularity', 'n_events': 14908, 'oracle_ap': 0.6704655333757652, 'tgn_ap_nofeat': 0.6983938877330229, 'loss_end_nofeat': 1.242183707138798, 'tgn_ap_feat': 0.8157284667216779, 'loss_end_feat': 1.0546891111270489}
